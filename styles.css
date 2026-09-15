@@ -1,0 +1,455 @@
+:root {
+  --bg: #201f2b;
+  --panel: #17151f;
+  --line: #33313f;
+  --ink: #f1eef8;
+  --dim: #948fb0;
+  --accent: #d43e69;
+  --accent-2: #59d6a0;
+  --accent-3: #f0c94a;
+  --shadow: 6px 6px 0 var(--line);
+
+  --device: #c9c7d8;
+  --device-light: #e2e0ee;
+  --device-shadow: #9795ab;
+  --device-dark: #6f6d85;
+  --device-frame: #322f45;
+  --device-frame-dark: #201e2e;
+  --btn-maroon: #7d2150;
+  --btn-maroon-light: #a3325c;
+  --btn-maroon-dark: #501536;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  background-image:
+    radial-gradient(circle at 1px 1px, #2b2938 1px, transparent 0);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+}
+
+.page-intro {
+  text-align: center;
+  padding: clamp(1.5rem, 4vw, 2.5rem) 1.5rem 0;
+}
+.page-intro p {
+  color: var(--dim);
+  margin: 0 auto;
+  max-width: 46ch;
+  font-size: 0.85rem;
+}
+
+.app-layout {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 2rem 1rem 1rem;
+}
+
+/* ---------- Game Boy shell ---------- */
+
+.gb-shell {
+  width: min(92vw, 460px);
+  flex-shrink: 0;
+  background: linear-gradient(155deg, var(--device-light), var(--device) 45%, var(--device-shadow) 100%);
+  border-radius: 22px 22px 68px 22px;
+  padding: 1.4rem 1.4rem 1.8rem;
+  box-shadow:
+    0 18px 0 -6px rgba(0, 0, 0, 0.35),
+    0 26px 40px rgba(0, 0, 0, 0.55),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
+  position: relative;
+}
+
+.gb-screen-bezel {
+  background: var(--device-frame);
+  border-radius: 14px;
+  padding: 1rem 1rem 0.7rem;
+  box-shadow:
+    inset 0 0 0 3px var(--device-frame-dark),
+    inset 0 6px 16px rgba(0, 0, 0, 0.6);
+}
+
+.gb-bezel-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+  padding: 0 0.15rem;
+}
+.gb-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px 2px rgba(212, 62, 105, 0.7);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.gb-led-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: #9c9ab3;
+}
+.gb-logo {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.8rem;
+  color: #e8e6f5;
+  letter-spacing: -0.5px;
+  margin: 0 0 0 auto;
+}
+
+.gb-tagline {
+  text-align: center;
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  color: #8b89a3;
+  margin: 0.7rem 0 0.15rem;
+}
+
+.gb-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding: 0 0.6rem;
+}
+
+.gb-dpad {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+}
+.gb-dpad-seg {
+  background: var(--device-frame-dark);
+  border: none;
+  padding: 0;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08), inset 0 -3px 0 rgba(0, 0, 0, 0.4);
+  cursor: default;
+}
+.gb-dpad-up    { grid-column: 2; grid-row: 1; border-radius: 6px 6px 0 0; }
+.gb-dpad-down  { grid-column: 2; grid-row: 3; border-radius: 0 0 6px 6px; }
+.gb-dpad-left  { grid-column: 1; grid-row: 2; border-radius: 6px 0 0 6px; cursor: pointer; }
+.gb-dpad-right { grid-column: 3; grid-row: 2; border-radius: 0 6px 6px 0; cursor: pointer; }
+.gb-dpad-center {
+  grid-column: 2;
+  grid-row: 2;
+  border: none;
+  padding: 0;
+  background: var(--device-frame-dark);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+.gb-dpad-left:hover, .gb-dpad-right:hover { background: #454259; }
+.gb-dpad-left:active, .gb-dpad-right:active { background: #15131e; }
+
+/* Any of these also fires the camera shutter while a camera stream is live */
+.gb-shutter-btn { cursor: pointer; transition: transform 80ms; }
+.gb-shutter-btn:active { transform: scale(0.88); }
+
+@keyframes gbArmedPulse {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(212, 62, 105, 0)); }
+  50% { filter: drop-shadow(0 0 7px rgba(212, 62, 105, 0.9)); }
+}
+.gb-armed { animation: gbArmedPulse 1.6s ease-in-out infinite; }
+
+.gb-ab {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  transform: rotate(-18deg);
+}
+.gb-round-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(160deg, var(--btn-maroon-light), var(--btn-maroon) 60%, var(--btn-maroon-dark));
+  color: rgba(255, 255, 255, 0.85);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.55rem;
+  box-shadow: 0 3px 0 var(--btn-maroon-dark), inset 0 2px 0 rgba(255, 255, 255, 0.25);
+  cursor: default;
+}
+.gb-btn-b { margin-bottom: 10px; }
+
+.gb-lower-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.6rem;
+  padding: 0 0.6rem;
+}
+
+.gb-startselect { display: flex; gap: 1.4rem; }
+.gb-pill-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  transform: rotate(-18deg);
+}
+.gb-pill {
+  width: 36px;
+  height: 11px;
+  border: none;
+  padding: 0;
+  border-radius: 6px;
+  background: #403e52;
+  box-shadow: 0 2px 0 var(--device-frame-dark), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+.gb-pill-label {
+  font-size: 0.48rem;
+  letter-spacing: 0.08em;
+  color: var(--device-dark);
+}
+
+.gb-speaker {
+  display: flex;
+  gap: 5px;
+  transform: rotate(-18deg);
+}
+.gb-speaker span {
+  width: 3px;
+  height: 32px;
+  background: var(--device-dark);
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+/* ---------- Screen content (unchanged app UI) ---------- */
+
+.stage {
+  background: var(--panel);
+  border-radius: 6px;
+  padding: 1rem;
+  height: 440px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  gap: 1rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  align-self: stretch;
+}
+
+.tabs .tab {
+  flex: 1;
+  font-family: inherit;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.6rem;
+  background: transparent;
+  color: var(--dim);
+  border: 2px solid var(--line);
+  cursor: pointer;
+}
+.tabs .tab.active { background: var(--accent-3); color: #17151f; border-color: var(--ink); }
+
+.mode-panel {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropzone {
+  width: 100%;
+  text-align: center;
+  color: var(--dim);
+  border: 2px dashed var(--line);
+  padding: 3rem 1rem;
+  cursor: pointer;
+  transition: border-color 150ms;
+}
+.dropzone.drag { border-color: var(--accent-2); color: var(--accent-2); }
+.dropzone strong { color: var(--ink); display: block; margin-bottom: 0.4rem; }
+
+.camera-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.camera-error {
+  color: var(--accent);
+  font-size: 0.8rem;
+  text-align: center;
+  max-width: 48ch;
+}
+
+.camera-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shutter {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 4px solid var(--ink);
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 100ms;
+}
+.shutter:hover { transform: translate(-1px, -1px); }
+.shutter:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+
+.filmstrip {
+  width: 100%;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.5rem;
+  background: var(--bg);
+  border: 2px solid var(--line);
+}
+.filmstrip img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  image-rendering: pixelated;
+  border: 2px solid var(--line);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 100ms;
+}
+.filmstrip img:hover { border-color: var(--accent-2); }
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 100ms;
+}
+.flash.flash-active { opacity: 0.85; }
+
+canvas {
+  max-width: 100%;
+  max-height: 260px;
+  width: auto;
+  height: auto;
+  image-rendering: pixelated;
+  display: none;
+}
+
+/* ---------- Settings tray ---------- */
+
+.panel {
+  width: min(92vw, 320px);
+  flex-shrink: 0;
+  align-self: stretch;
+  background: var(--panel);
+  border: 3px solid var(--ink);
+  box-shadow: var(--shadow);
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.field { display: flex; flex-direction: column; gap: 0.35rem; }
+.field.disabled { opacity: 0.35; pointer-events: none; }
+
+.field label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  display: flex;
+  justify-content: space-between;
+}
+
+.field label span.val { color: var(--accent-3); }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--line);
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  background: var(--accent);
+  border: 2px solid var(--ink);
+  cursor: pointer;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.filters button {
+  font-family: inherit;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.55rem 0.4rem;
+  background: transparent;
+  color: var(--ink);
+  border: 2px solid var(--line);
+  cursor: pointer;
+  transition: transform 100ms, background 100ms, border-color 100ms;
+}
+.filters button:hover { border-color: var(--ink); }
+.filters button.active {
+  background: var(--accent-2);
+  color: #17151f;
+  border-color: var(--ink);
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.actions { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.4rem; }
+
+.btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  padding: 0.85rem 1rem;
+  border: 3px solid var(--ink);
+  cursor: pointer;
+  text-align: center;
+  background: var(--accent);
+  color: #17151f;
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: transform 100ms;
+}
+.btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+.btn:active { transform: translate(0, 0); box-shadow: 2px 2px 0 var(--ink); }
+.btn.secondary { background: var(--panel); color: var(--ink); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: 4px 4px 0 var(--ink); }
+
+footer {
+  text-align: center;
+  color: var(--dim);
+  font-size: 0.75rem;
+  padding: 1.5rem;
+}

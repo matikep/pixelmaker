@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXELMAKER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="page-intro">
+  <p>Simulador de cámara pixel art estilo consola retro. Todo corre en tu navegador, nada se sube a ningún servidor.</p>
+</header>
+
+<div class="app-layout">
+<div class="gb-shell">
+  <div class="gb-screen-bezel">
+    <div class="gb-bezel-top">
+      <span class="gb-led" aria-hidden="true"></span>
+      <span class="gb-led-label">POWER</span>
+      <h1 class="gb-logo">PIXELMAKER</h1>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="tabs" id="modeTabs">
+        <button class="tab active" data-mode="image">Imagen</button>
+        <button class="tab" data-mode="camera">Cámara</button>
+      </div>
+
+      <div class="mode-panel" id="imagePanel">
+        <div class="dropzone" id="dropzone">
+          <strong>Arrastrá una imagen acá</strong>
+          o hacé click para elegir un archivo
+          <input type="file" id="fileInput" accept="image/*" hidden>
+        </div>
+      </div>
+
+      <div class="mode-panel camera-panel" id="cameraPanel" hidden>
+        <button class="btn" id="activateCameraBtn">Activar cámara</button>
+        <p class="camera-error" id="cameraError" hidden></p>
+        <div class="camera-controls" id="cameraControls" hidden>
+          <button class="shutter" id="shutterBtn" aria-label="Capturar foto"></button>
+        </div>
+        <div class="filmstrip" id="filmstrip" hidden></div>
+        <video id="video" autoplay muted playsinline hidden></video>
+      </div>
+
+      <canvas id="canvas"></canvas>
+      <div class="flash" id="flash"></div>
+    </div>
+
+    <p class="gb-tagline">LIVE PIXEL DISPLAY</p>
+  </div>
+
+  <div class="gb-controls">
+    <div class="gb-dpad" role="group" aria-label="Cambiar pestaña / capturar foto">
+      <button class="gb-dpad-seg gb-dpad-up gb-shutter-btn" id="gbDpadUp" aria-label="Capturar foto"></button>
+      <button class="gb-dpad-seg gb-dpad-down gb-shutter-btn" id="gbDpadDown" aria-label="Capturar foto"></button>
+      <button class="gb-dpad-seg gb-dpad-left" id="dpadLeft" aria-label="Pestaña anterior"></button>
+      <button class="gb-dpad-seg gb-dpad-right" id="dpadRight" aria-label="Pestaña siguiente"></button>
+      <button class="gb-dpad-center gb-shutter-btn" id="gbDpadCenter" aria-label="Capturar foto"></button>
+    </div>
+
+    <div class="gb-ab">
+      <button class="gb-round-btn gb-btn-b gb-shutter-btn" id="gbBtnB" aria-label="Capturar foto">B</button>
+      <button class="gb-round-btn gb-btn-a gb-shutter-btn" id="gbBtnA" aria-label="Capturar foto">A</button>
+    </div>
+  </div>
+
+  <div class="gb-lower-row">
+    <div class="gb-startselect">
+      <div class="gb-pill-group">
+        <button class="gb-pill gb-shutter-btn" id="gbSelectBtn" aria-label="Capturar foto"></button>
+        <span class="gb-pill-label">SELECT</span>
+      </div>
+      <div class="gb-pill-group">
+        <button class="gb-pill gb-shutter-btn" id="gbStartBtn" aria-label="Capturar foto"></button>
+        <span class="gb-pill-label">START</span>
+      </div>
+    </div>
+
+    <div class="gb-speaker" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="pixelControls">
+  <div class="field">
+    <label>Tamaño de pixel <span class="val" id="pixelSizeVal">8</span></label>
+    <input type="range" id="pixelSize" min="1" max="40" value="8">
+  </div>
+
+  <div class="field" id="colorsField">
+    <label>Colores (posterize) <span class="val" id="colorsVal">16</span></label>
+    <input type="range" id="colors" min="2" max="32" value="16">
+  </div>
+
+  <div class="field">
+    <label>Brillo <span class="val" id="brightnessVal">100%</span></label>
+    <input type="range" id="brightness" min="30" max="200" value="100">
+  </div>
+
+  <div class="field">
+    <label>Contraste <span class="val" id="contrastVal">100%</span></label>
+    <input type="range" id="contrast" min="30" max="200" value="100">
+  </div>
+
+  <div class="field">
+    <label>Saturación <span class="val" id="saturationVal">100%</span></label>
+    <input type="range" id="saturation" min="0" max="250" value="100">
+  </div>
+
+  <div class="field">
+    <label>Filtro</label>
+    <div class="filters" id="filters">
+      <button data-filter="none" class="active">Normal</button>
+      <button data-filter="grayscale">Gris</button>
+      <button data-filter="sepia">Sepia</button>
+      <button data-filter="invert">Invertir</button>
+    </div>
+  </div>
+
+  <div class="field" id="paletteField">
+    <label>Paleta retro</label>
+    <div class="filters" id="palettes">
+      <button data-palette="none" class="active">Ninguna</button>
+      <button data-palette="gameboy">Game Boy</button>
+      <button data-palette="pico8">PICO-8</button>
+      <button data-palette="cga">CGA</button>
+      <button data-palette="c64">C64</button>
+      <button data-palette="mono">1-bit</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Efectos</label>
+    <div class="filters" id="effects">
+      <button data-effect="dither">Dithering</button>
+      <button data-effect="grid">Grid</button>
+      <button data-effect="scanlines">Scanlines</button>
+      <button data-effect="aberration">Aberración</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn secondary" id="resetBtn" disabled>Reiniciar</button>
+    <button class="btn" id="downloadBtn" disabled>Descargar PNG</button>
+  </div>
+</div>
+</div>
+
+<footer>hecho con &lt;canvas&gt;, sin dependencias</footer>
+
+<script src="app.js"></script>
+<script src="camera.js"></script>
+
+</body>
+</html>
