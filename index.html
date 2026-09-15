@@ -12,7 +12,7 @@
 <body>
 
 <header class="page-intro">
-  <p>Simulador de cámara pixel art estilo consola retro. Todo corre en tu navegador, nada se sube a ningún servidor.</p>
+  <p>Cámara pixel art retro, 100% en tu navegador.</p>
 </header>
 
 <div class="app-layout">
@@ -89,6 +89,11 @@
 </div>
 
 <div class="panel" id="pixelControls">
+  <div class="panel-sheet-header">
+    <span class="sheet-handle" aria-hidden="true"></span>
+    <button class="sheet-close" id="sheetCloseBtn" aria-label="Cerrar ajustes">&times;</button>
+  </div>
+
   <div class="field">
     <label>Tamaño de pixel <span class="val" id="pixelSizeVal">8</span></label>
     <input type="range" id="pixelSize" min="1" max="40" value="8">
@@ -154,6 +159,11 @@
 </div>
 
 <footer>hecho con &lt;canvas&gt;, sin dependencias</footer>
+
+<button class="settings-fab" id="settingsFab" aria-label="Abrir ajustes" aria-expanded="false" aria-controls="pixelControls">
+  <span class="fab-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+</button>
+<div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
 
 <script src="app.js"></script>
 <script src="camera.js"></script>

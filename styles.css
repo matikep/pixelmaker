@@ -58,7 +58,10 @@ body {
 
 .gb-shell {
   width: min(92vw, 460px);
+  aspect-ratio: 0.6;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
   background: linear-gradient(155deg, var(--device-light), var(--device) 45%, var(--device-shadow) 100%);
   border-radius: 22px 22px 68px 22px;
   padding: 1.4rem 1.4rem 1.8rem;
@@ -70,6 +73,10 @@ body {
 }
 
 .gb-screen-bezel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   background: var(--device-frame);
   border-radius: 14px;
   padding: 1rem 1rem 0.7rem;
@@ -233,7 +240,8 @@ body {
   background: var(--panel);
   border-radius: 6px;
   padding: 1rem;
-  height: 440px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -372,6 +380,8 @@ canvas {
   gap: 1.1rem;
 }
 
+.panel-sheet-header { display: none; }
+
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 .field.disabled { opacity: 0.35; pointer-events: none; }
 
@@ -452,4 +462,78 @@ footer {
   color: var(--dim);
   font-size: 0.75rem;
   padding: 1.5rem;
+}
+
+/* ---------- Mobile settings sheet ---------- */
+
+.settings-fab {
+  display: none;
+  position: fixed;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: var(--accent);
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  z-index: 61;
+}
+.settings-fab:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+
+.fab-icon { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.fab-icon span { display: block; width: 20px; height: 3px; border-radius: 1px; background: #17151f; }
+.fab-icon span:nth-child(2) { width: 14px; }
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 9, 14, 0.65);
+  z-index: 55;
+}
+
+@media (max-width: 640px) {
+  .settings-fab { display: flex; }
+
+  .panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 80vh;
+    margin: 0;
+    border-width: 3px 0 0;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.55);
+    transform: translateY(105%);
+    transition: transform 260ms ease;
+    overflow-y: auto;
+    z-index: 60;
+  }
+  .panel.open { transform: translateY(0); }
+
+  .panel-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin: -0.4rem 0 0.2rem;
+  }
+  .sheet-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--line); }
+  .sheet-close {
+    position: absolute;
+    right: 0;
+    top: -0.3rem;
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.3rem;
+  }
 }

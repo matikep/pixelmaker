@@ -311,4 +311,27 @@ const PM = {};
   }
   document.getElementById('dpadLeft').addEventListener('click', () => cycleMode(-1));
   document.getElementById('dpadRight').addEventListener('click', () => cycleMode(1));
+
+  const pixelControlsPanel = document.getElementById('pixelControls');
+  const settingsFab = document.getElementById('settingsFab');
+  const sheetBackdrop = document.getElementById('sheetBackdrop');
+  const sheetCloseBtn = document.getElementById('sheetCloseBtn');
+
+  function openSheet() {
+    pixelControlsPanel.classList.add('open');
+    sheetBackdrop.hidden = false;
+    settingsFab.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSheet() {
+    pixelControlsPanel.classList.remove('open');
+    sheetBackdrop.hidden = true;
+    settingsFab.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+  settingsFab.addEventListener('click', () => {
+    pixelControlsPanel.classList.contains('open') ? closeSheet() : openSheet();
+  });
+  sheetBackdrop.addEventListener('click', closeSheet);
+  sheetCloseBtn.addEventListener('click', closeSheet);
 })();
