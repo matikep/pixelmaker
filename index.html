@@ -3,7 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PIXELMAKER</title>
+<title>PixelMaker · Convertir imágenes a pixel art online gratis</title>
+<meta name="description" content="Convertí imágenes en pixel art gratis, en tu navegador. Paletas Game Boy, PICO-8, CGA y C64, dithering, scanlines y cámara web estilo Game Boy Camera.">
+<link rel="canonical" href="https://matikep.github.io/pixelmaker/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#201f2b">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PixelMaker">
+<meta property="og:locale" content="es_ES">
+<meta property="og:url" content="https://matikep.github.io/pixelmaker/">
+<meta property="og:title" content="PixelMaker · Pixel art online y cámara Game Boy">
+<meta property="og:description" content="Convertí imágenes en pixel art gratis, en tu navegador. Paletas retro, dithering y cámara web estilo Game Boy Camera.">
+<meta property="og:image" content="https://matikep.github.io/pixelmaker/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="PixelMaker: pantalla de Game Boy con el logo en pixel art">
+<meta name="twitter:card" content="summary_large_image">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "PixelMaker",
+  "url": "https://matikep.github.io/pixelmaker/",
+  "description": "Convertí imágenes en pixel art gratis, en tu navegador. Paletas Game Boy, PICO-8, CGA y C64, dithering, scanlines y cámara web estilo Game Boy Camera.",
+  "image": "https://matikep.github.io/pixelmaker/og-image.png",
+  "inLanguage": "es",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Any",
+  "browserRequirements": "Requiere un navegador moderno con soporte de canvas",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": [
+    "Convertir imágenes a pixel art",
+    "Paletas retro: Game Boy, PICO-8, CGA, C64, 1-bit",
+    "Dithering Bayer, grid, scanlines y aberración cromática",
+    "Cámara web en vivo estilo Game Boy Camera",
+    "Descarga en PNG"
+  ],
+  "author": { "@type": "Person", "name": "Matías Lobos", "url": "https://github.com/matikep" }
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
@@ -12,7 +55,8 @@
 <body>
 
 <header class="page-intro">
-  <p>Cámara pixel art retro, 100% en tu navegador.</p>
+  <p class="gallery-label">Tu carrete</p>
+  <div class="filmstrip" id="filmstrip" hidden></div>
 </header>
 
 <div class="app-layout">
@@ -25,7 +69,7 @@
     </div>
 
     <div class="stage" id="stage">
-      <div class="tabs" id="modeTabs">
+      <div class="tabs" id="modeTabs" hidden>
         <button class="tab active" data-mode="image">Imagen</button>
         <button class="tab" data-mode="camera">Cámara</button>
       </div>
@@ -39,12 +83,8 @@
       </div>
 
       <div class="mode-panel camera-panel" id="cameraPanel" hidden>
-        <button class="btn" id="activateCameraBtn">Activar cámara</button>
+        <p class="camera-hint" id="cameraHint">Apretá <b>A</b> o <b>B</b> para encender la cámara</p>
         <p class="camera-error" id="cameraError" hidden></p>
-        <div class="camera-controls" id="cameraControls" hidden>
-          <button class="shutter" id="shutterBtn" aria-label="Capturar foto"></button>
-        </div>
-        <div class="filmstrip" id="filmstrip" hidden></div>
         <video id="video" autoplay muted playsinline hidden></video>
       </div>
 
@@ -52,16 +92,16 @@
       <div class="flash" id="flash"></div>
     </div>
 
-    <p class="gb-tagline">LIVE PIXEL DISPLAY</p>
+    <p class="gb-tagline" id="gbTagline">LIVE PIXEL DISPLAY</p>
   </div>
 
   <div class="gb-controls">
-    <div class="gb-dpad" role="group" aria-label="Cambiar pestaña / capturar foto">
-      <button class="gb-dpad-seg gb-dpad-up gb-shutter-btn" id="gbDpadUp" aria-label="Capturar foto"></button>
-      <button class="gb-dpad-seg gb-dpad-down gb-shutter-btn" id="gbDpadDown" aria-label="Capturar foto"></button>
+    <div class="gb-dpad" role="group" aria-label="Cambiar pestaña">
+      <button class="gb-dpad-seg gb-dpad-up" tabindex="-1" aria-hidden="true"></button>
+      <button class="gb-dpad-seg gb-dpad-down" tabindex="-1" aria-hidden="true"></button>
       <button class="gb-dpad-seg gb-dpad-left" id="dpadLeft" aria-label="Pestaña anterior"></button>
       <button class="gb-dpad-seg gb-dpad-right" id="dpadRight" aria-label="Pestaña siguiente"></button>
-      <button class="gb-dpad-center gb-shutter-btn" id="gbDpadCenter" aria-label="Capturar foto"></button>
+      <button class="gb-dpad-center" tabindex="-1" aria-hidden="true"></button>
     </div>
 
     <div class="gb-ab">
@@ -73,11 +113,11 @@
   <div class="gb-lower-row">
     <div class="gb-startselect">
       <div class="gb-pill-group">
-        <button class="gb-pill gb-shutter-btn" id="gbSelectBtn" aria-label="Capturar foto"></button>
+        <button class="gb-pill" id="gbSelect" aria-label="Cambiar entre cámara trasera y frontal"></button>
         <span class="gb-pill-label">SELECT</span>
       </div>
       <div class="gb-pill-group">
-        <button class="gb-pill gb-shutter-btn" id="gbStartBtn" aria-label="Capturar foto"></button>
+        <button class="gb-pill" tabindex="-1" aria-hidden="true"></button>
         <span class="gb-pill-label">START</span>
       </div>
     </div>
@@ -95,27 +135,27 @@
   </div>
 
   <div class="field">
-    <label>Tamaño de pixel <span class="val" id="pixelSizeVal">8</span></label>
+    <label for="pixelSize">Tamaño de pixel <span class="val" id="pixelSizeVal">8</span></label>
     <input type="range" id="pixelSize" min="1" max="40" value="8">
   </div>
 
   <div class="field" id="colorsField">
-    <label>Colores (posterize) <span class="val" id="colorsVal">16</span></label>
+    <label for="colors">Colores (posterize) <span class="val" id="colorsVal">16</span></label>
     <input type="range" id="colors" min="2" max="32" value="16">
   </div>
 
   <div class="field">
-    <label>Brillo <span class="val" id="brightnessVal">100%</span></label>
+    <label for="brightness">Brillo <span class="val" id="brightnessVal">100%</span></label>
     <input type="range" id="brightness" min="30" max="200" value="100">
   </div>
 
   <div class="field">
-    <label>Contraste <span class="val" id="contrastVal">100%</span></label>
+    <label for="contrast">Contraste <span class="val" id="contrastVal">100%</span></label>
     <input type="range" id="contrast" min="30" max="200" value="100">
   </div>
 
   <div class="field">
-    <label>Saturación <span class="val" id="saturationVal">100%</span></label>
+    <label for="saturation">Saturación <span class="val" id="saturationVal">100%</span></label>
     <input type="range" id="saturation" min="0" max="250" value="100">
   </div>
 
@@ -158,7 +198,40 @@
 </div>
 </div>
 
-<footer>hecho con &lt;canvas&gt;, sin dependencias</footer>
+<section class="about" aria-labelledby="about-heading">
+  <h2 id="about-heading">Pixel art online, gratis y sin instalar nada</h2>
+  <p>PixelMaker convierte cualquier foto o imagen en pixel art directamente en tu navegador. Nada se sube a ningún servidor: todo se procesa en tu dispositivo con <code>&lt;canvas&gt;</code>. También podés usar la webcam como una Game Boy Camera en vivo.</p>
+
+  <h3>Qué podés hacer</h3>
+  <ul>
+    <li><strong>Pixelar imágenes</strong> con tamaño de pixel ajustable y reducción de colores (posterize).</li>
+    <li><strong>Paletas retro</strong>: Game Boy, PICO-8, CGA, Commodore 64 y 1-bit.</li>
+    <li><strong>Efectos</strong>: dithering ordenado (Bayer), grid, scanlines CRT y aberración cromática.</li>
+    <li><strong>Filtros</strong>: brillo, contraste, saturación, escala de grises, sepia e invertir.</li>
+    <li><strong>Cámara Game Boy</strong>: sacá fotos pixeladas con la webcam y guardá hasta 30 en el carrete.</li>
+    <li><strong>Descarga en PNG</strong>, sin marcas de agua ni registro.</li>
+  </ul>
+
+  <h3>Preguntas frecuentes</h3>
+  <details>
+    <summary>¿Mis imágenes se suben a algún servidor?</summary>
+    <p>No. La imagen y la cámara se procesan localmente en tu navegador; nunca salen de tu dispositivo.</p>
+  </details>
+  <details>
+    <summary>¿Cómo saco una foto estilo Game Boy Camera?</summary>
+    <p>Activá la cámara, elegí la paleta Game Boy y apretá el botón A o B de la consola para disparar.</p>
+  </details>
+  <details>
+    <summary>¿Qué formatos de imagen acepta?</summary>
+    <p>Cualquier imagen que tu navegador pueda abrir: JPG, PNG, WebP o GIF. El resultado se descarga en PNG.</p>
+  </details>
+  <details>
+    <summary>¿Es gratis?</summary>
+    <p>Sí, es gratis y no necesitás crear ninguna cuenta.</p>
+  </details>
+</section>
+
+<footer>hecho con &lt;canvas&gt;, sin dependencias · <a href="https://github.com/matikep/pixelmaker">código en GitHub</a></footer>
 
 <button class="settings-fab" id="settingsFab" aria-label="Abrir ajustes" aria-expanded="false" aria-controls="pixelControls">
   <span class="fab-icon" aria-hidden="true"><span></span><span></span><span></span></span>

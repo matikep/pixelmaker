@@ -260,12 +260,34 @@ const PM = {};
     render();
   });
 
-  downloadBtn.addEventListener('click', () => {
+  function dataUrlToBlob(url) {
+    const bin = atob(url.slice(url.indexOf(',') + 1));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: 'image/png' });
+  }
+
+  function downloadFile(file) {
     const link = document.createElement('a');
-    link.download = 'pixelart.png';
-    link.href = canvas.toDataURL('image/png');
+    link.href = URL.createObjectURL(file);
+    link.download = file.name;
     link.click();
-  });
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  // iOS Safari ignores <a download>, so on touch devices hand the PNG to the
+  // share sheet ("Guardar imagen" → Fotos). Everything before share() is sync
+  // so the tap's user activation is still valid.
+  PM.saveImage = (dataUrl, filename) => {
+    const file = new File([dataUrlToBlob(dataUrl)], filename, { type: 'image/png' });
+    const canShareFile = matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] });
+    if (!canShareFile) return downloadFile(file);
+    navigator.share({ files: [file] }).catch((err) => {
+      if (err.name !== 'AbortError') downloadFile(file);
+    });
+  };
+
+  downloadBtn.addEventListener('click', () => PM.saveImage(canvas.toDataURL('image/png'), 'pixelart.png'));
 
   resetBtn.addEventListener('click', () => {
     PM.onResetCamera?.();
@@ -283,6 +305,9 @@ const PM = {};
     colorsField.classList.remove('disabled');
   });
 
+  const gbTagline = document.getElementById('gbTagline');
+  const TAGLINES = { image: 'LIVE PIXEL DISPLAY', camera: 'CÁMARA EN VIVO' };
+
   function setMode(mode) {
     const btn = modeTabs.querySelector(`button[data-mode="${mode}"]`);
     if (!btn) return;
@@ -290,6 +315,7 @@ const PM = {};
     imagePanel.hidden = mode !== 'image';
     cameraPanel.hidden = mode !== 'camera';
     canvas.style.display = PM.source ? 'block' : 'none';
+    gbTagline.textContent = TAGLINES[mode];
     if (mode === 'camera') {
       PM.onEnterCamera?.();
     } else {

@@ -1,18 +1,20 @@
 (() => {
   const video = document.getElementById('video');
-  const activateBtn = document.getElementById('activateCameraBtn');
-  const shutterBtn = document.getElementById('shutterBtn');
-  const cameraControls = document.getElementById('cameraControls');
+  const cameraHint = document.getElementById('cameraHint');
   const cameraError = document.getElementById('cameraError');
   const flash = document.getElementById('flash');
   const filmstrip = document.getElementById('filmstrip');
   const resetBtn = document.getElementById('resetBtn');
+  const selectBtn = document.getElementById('gbSelect');
   const chromeShutterBtns = [...document.querySelectorAll('.gb-shutter-btn')];
 
   const MAX_SHOTS = 30;
   let stream = null;
   let rafId = null;
   let active = false;
+  let starting = false;
+  let inCameraMode = false;
+  let facingMode = 'environment';
   let appliedDefaultLook = false;
   const shots = [];
 
@@ -35,26 +37,29 @@
   }
 
   async function activate() {
+    if (starting) return;
     cameraError.hidden = true;
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
       showError('La cámara necesita un contexto seguro: abrí esta carpeta con un servidor local (por ejemplo "python3 -m http.server" y entrá a http://localhost:8000) o publicalo por https. Abrir el archivo directamente (file://) no alcanza.');
       return;
     }
+    starting = true;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      // "ideal" so laptops without a rear camera fall back to whatever they have
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facingMode } }, audio: false });
+      video.srcObject = stream;
+      await video.play();
     } catch (err) {
       showError('No se pudo acceder a la cámara: ' + err.message);
       return;
+    } finally {
+      starting = false;
     }
-    video.srcObject = stream;
-    await video.play();
     applyDefaultLook();
     PM.setSource(video);
     resetBtn.disabled = false;
     active = true;
-    activateBtn.hidden = true;
-    cameraControls.hidden = false;
-    chromeShutterBtns.forEach(btn => btn.classList.add('gb-armed'));
+    cameraHint.hidden = true;
     loop();
   }
 
@@ -64,9 +69,11 @@
     rafId = null;
     if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
     video.srcObject = null;
-    activateBtn.hidden = false;
-    cameraControls.hidden = true;
-    chromeShutterBtns.forEach(btn => btn.classList.remove('gb-armed'));
+    cameraHint.hidden = false;
+  }
+
+  function setArmed(armed) {
+    chromeShutterBtns.forEach(btn => btn.classList.toggle('gb-armed', armed));
   }
 
   function capture() {
@@ -86,20 +93,27 @@
       img.src = url;
       img.alt = `Foto ${shots.length - i}`;
       img.title = 'Descargar';
-      img.addEventListener('click', () => {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `gbcam-${shots.length - i}.png`;
-        a.click();
-      });
+      img.addEventListener('click', () => PM.saveImage(url, `gbcam-${shots.length - i}.png`));
       filmstrip.appendChild(img);
     });
   }
 
-  activateBtn.addEventListener('click', activate);
-  shutterBtn.addEventListener('click', capture);
-  chromeShutterBtns.forEach(btn => btn.addEventListener('click', () => { if (active) capture(); }));
+  function onShutter() {
+    if (!inCameraMode) return;
+    if (active) capture();
+    else activate();
+  }
 
-  PM.onExitCamera = stop;
+  function flipCamera() {
+    if (!inCameraMode) return;
+    facingMode = facingMode === 'environment' ? 'user' : 'environment';
+    if (active) { stop(); activate(); }
+  }
+
+  chromeShutterBtns.forEach(btn => btn.addEventListener('click', onShutter));
+  selectBtn.addEventListener('click', flipCamera);
+
+  PM.onEnterCamera = () => { inCameraMode = true; setArmed(true); };
+  PM.onExitCamera = () => { inCameraMode = false; setArmed(false); stop(); };
   PM.onResetCamera = stop;
 })();

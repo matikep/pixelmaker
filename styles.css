@@ -38,11 +38,12 @@ body {
   text-align: center;
   padding: clamp(1.5rem, 4vw, 2.5rem) 1.5rem 0;
 }
-.page-intro p {
+.gallery-label {
   color: var(--dim);
-  margin: 0 auto;
-  max-width: 46ch;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0 0 0.6rem;
 }
 
 .app-layout {
@@ -160,15 +161,46 @@ body {
 .gb-dpad-left:hover, .gb-dpad-right:hover { background: #454259; }
 .gb-dpad-left:active, .gb-dpad-right:active { background: #15131e; }
 
-/* Any of these also fires the camera shutter while a camera stream is live */
-.gb-shutter-btn { cursor: pointer; transition: transform 80ms; }
+/* A and B also fire the camera shutter while a camera stream is live */
+.gb-shutter-btn { position: relative; cursor: pointer; transition: transform 80ms; }
 .gb-shutter-btn:active { transform: scale(0.88); }
 
-@keyframes gbArmedPulse {
-  0%, 100% { filter: drop-shadow(0 0 0 rgba(212, 62, 105, 0)); }
-  50% { filter: drop-shadow(0 0 7px rgba(212, 62, 105, 0.9)); }
+/* In camera mode A/B blink (yellow halo + expanding ring) to say "press me".
+   B runs half a cycle behind A so the two alternate. */
+.gb-armed::before,
+.gb-armed::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
 }
-.gb-armed { animation: gbArmedPulse 1.6s ease-in-out infinite; }
+.gb-armed::before {
+  inset: -5px;
+  z-index: -1;
+  background: var(--accent-3);
+  box-shadow: 0 0 14px 4px var(--accent-3);
+  animation: gbHaloBlink 800ms steps(1) infinite;
+}
+.gb-armed::after {
+  inset: -4px;
+  border: 3px solid var(--accent-3);
+  animation: gbRingPulse 800ms ease-out infinite;
+}
+.gb-btn-b.gb-armed::before,
+.gb-btn-b.gb-armed::after { animation-delay: -400ms; }
+
+@keyframes gbHaloBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+@keyframes gbRingPulse {
+  from { transform: scale(0.9); opacity: 1; }
+  to { transform: scale(1.7); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gb-armed::before { animation: none; opacity: 0.8; }
+  .gb-armed::after { animation: none; opacity: 0; }
+}
 
 .gb-ab {
   display: flex;
@@ -215,6 +247,8 @@ body {
   background: #403e52;
   box-shadow: 0 2px 0 var(--device-frame-dark), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
+#gbSelect { cursor: pointer; }
+#gbSelect:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--device-frame-dark); }
 .gb-pill-label {
   font-size: 0.48rem;
   letter-spacing: 0.08em;
@@ -299,6 +333,19 @@ body {
   gap: 1rem;
 }
 
+.camera-hint {
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.8rem;
+  text-align: center;
+  line-height: 1.6;
+}
+.camera-hint b {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  color: var(--accent-3);
+}
+
 .camera-error {
   color: var(--accent);
   font-size: 0.8rem;
@@ -306,27 +353,9 @@ body {
   max-width: 48ch;
 }
 
-.camera-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.shutter {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 4px solid var(--ink);
-  cursor: pointer;
-  box-shadow: 4px 4px 0 var(--ink);
-  transition: transform 100ms;
-}
-.shutter:hover { transform: translate(-1px, -1px); }
-.shutter:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
-
 .filmstrip {
-  width: 100%;
+  max-width: min(92vw, 460px);
+  margin: 0 auto;
   display: flex;
   gap: 0.5rem;
   overflow-x: auto;
@@ -457,12 +486,46 @@ input[type="range"]::-webkit-slider-thumb {
 .btn.secondary { background: var(--panel); color: var(--ink); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: 4px 4px 0 var(--ink); }
 
+.about {
+  max-width: 68ch;
+  margin: clamp(2rem, 6vw, 4rem) auto 0;
+  padding: 0 1.5rem;
+  color: var(--dim);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.about h2 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.about h3 {
+  color: var(--accent-3);
+  font-size: 0.85rem;
+  margin: 2rem 0 0.5rem;
+}
+.about strong { color: var(--ink); }
+.about ul { padding-left: 1.2rem; }
+.about details {
+  border-bottom: 1px solid var(--line);
+  padding: 0.6rem 0;
+}
+.about summary {
+  color: var(--ink);
+  cursor: pointer;
+}
+.about summary:hover,
+.about summary:focus-visible { color: var(--accent-2); }
+.about details p { margin: 0.5rem 0 0; }
+
 footer {
   text-align: center;
   color: var(--dim);
   font-size: 0.75rem;
   padding: 1.5rem;
 }
+footer a { color: var(--accent-2); }
 
 /* ---------- Mobile settings sheet ---------- */
 
