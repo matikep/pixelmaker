@@ -8,6 +8,10 @@
 <link rel="canonical" href="https://matikep.github.io/pixelmaker/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#201f2b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PixelMaker">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
@@ -50,6 +54,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -84,6 +89,7 @@
 
       <div class="mode-panel camera-panel" id="cameraPanel" hidden>
         <p class="camera-hint" id="cameraHint">Apretá <b>A</b> o <b>B</b> para encender la cámara</p>
+        <button class="flip-camera" id="flipCameraBtn" hidden>&#8634; Dar vuelta la cámara</button>
         <p class="camera-error" id="cameraError" hidden></p>
         <video id="video" autoplay muted playsinline hidden></video>
       </div>
@@ -145,8 +151,8 @@
   </div>
 
   <div class="field">
-    <label for="brightness">Brillo <span class="val" id="brightnessVal">100%</span></label>
-    <input type="range" id="brightness" min="30" max="200" value="100">
+    <label for="brightness">Brillo <span class="val" id="brightnessVal">125%</span></label>
+    <input type="range" id="brightness" min="30" max="200" value="125">
   </div>
 
   <div class="field">

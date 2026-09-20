@@ -12,6 +12,8 @@ Sin frameworks, sin build, sin dependencias. Todo es HTML/CSS/JS plano que corre
 - Dithering ordenado (Bayer), grid, scanlines, aberración cromática.
 - Filtros básicos: brillo, contraste, saturación, gris, sepia, invertir.
 - Modo cámara con "carrete" tipo Game Boy Camera (hasta 30 fotos) y descarga en PNG.
+- En celular abre directo la cámara en vivo, con el look Game Boy puesto por defecto.
+- Instalable como PWA y funciona offline.
 - Toda la interfaz simula el cuerpo de una Game Boy: D-pad, botones A/B, Start/Select, y cualquiera de esos botones también dispara la foto.
 - En mobile los ajustes se abren como un panel deslizable desde abajo.
 

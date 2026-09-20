@@ -289,21 +289,29 @@ const PM = {};
 
   downloadBtn.addEventListener('click', () => PM.saveImage(canvas.toDataURL('image/png'), 'pixelart.png'));
 
+  // The Game Boy look is the point of the app, so it is what you get on load
+  // and after a reset: green palette + dithering, no extra clicks.
+  function applyDefaultLook() {
+    activeFilter = 'none';
+    activePalette = 'gameboy';
+    activeEffects.clear();
+    activeEffects.add('dither');
+    [...filtersEl.children].forEach(b => b.classList.toggle('active', b.dataset.filter === 'none'));
+    [...palettesEl.children].forEach(b => b.classList.toggle('active', b.dataset.palette === 'gameboy'));
+    [...effectsEl.children].forEach(b => b.classList.toggle('active', b.dataset.effect === 'dither'));
+    colorsField.classList.add('disabled');
+  }
+
   resetBtn.addEventListener('click', () => {
     PM.onResetCamera?.();
     PM.clearSource();
     fileInput.value = '';
     dropzone.style.display = 'block';
     resetBtn.disabled = true;
-
-    activeFilter = 'none';
-    activePalette = 'none';
-    activeEffects.clear();
-    [...filtersEl.children].forEach(b => b.classList.toggle('active', b.dataset.filter === 'none'));
-    [...palettesEl.children].forEach(b => b.classList.toggle('active', b.dataset.palette === 'none'));
-    [...effectsEl.children].forEach(b => b.classList.remove('active'));
-    colorsField.classList.remove('disabled');
+    applyDefaultLook();
   });
+
+  applyDefaultLook();
 
   const gbTagline = document.getElementById('gbTagline');
   const TAGLINES = { image: 'LIVE PIXEL DISPLAY', camera: 'CÁMARA EN VIVO' };
@@ -337,6 +345,7 @@ const PM = {};
   }
   document.getElementById('dpadLeft').addEventListener('click', () => cycleMode(-1));
   document.getElementById('dpadRight').addEventListener('click', () => cycleMode(1));
+  PM.setMode = setMode;
 
   const pixelControlsPanel = document.getElementById('pixelControls');
   const settingsFab = document.getElementById('settingsFab');
@@ -360,4 +369,8 @@ const PM = {};
   });
   sheetBackdrop.addEventListener('click', closeSheet);
   sheetCloseBtn.addEventListener('click', closeSheet);
+
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
 })();
