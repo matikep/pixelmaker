@@ -14,6 +14,7 @@
   let rafId = null;
   let active = false;
   let starting = false;
+  let session = 0; // bumped by stop() so a getUserMedia that resolves late is discarded
   let inCameraMode = false;
   let facingMode = 'user';
   const shots = [];
@@ -37,9 +38,13 @@
       return;
     }
     starting = true;
+    const id = session;
     try {
       // "ideal" so laptops without a rear camera fall back to whatever they have
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facingMode } }, audio: false });
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: facingMode } }, audio: false });
+      // Left camera mode / reset while the permission prompt was open: don't leave the camera on.
+      if (id !== session) { s.getTracks().forEach(t => t.stop()); return; }
+      stream = s;
       video.srcObject = stream;
       // Not awaited: swapping srcObject (flipping the camera) leaves the previous
       // play() promise pending forever, which would wedge `starting`.
@@ -60,6 +65,7 @@
   }
 
   function stop() {
+    session++;
     active = false;
     if (rafId) cancelAnimationFrame(rafId);
     rafId = null;
@@ -74,6 +80,7 @@
   }
 
   function capture() {
+    if (!video.videoWidth) return; // no frame yet, the canvas would be empty
     flash.classList.add('flash-active');
     setTimeout(() => flash.classList.remove('flash-active'), 150);
     const url = PM.canvas.toDataURL('image/png');

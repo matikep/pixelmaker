@@ -1,6 +1,6 @@
 // Network-first: the cache exists so the app opens offline, not to freeze a
 // version. Cache-first would keep serving old files after every deploy.
-const CACHE = 'pixelmaker-v2';
+const CACHE = 'pixelmaker-v3';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'camera.js', 'favicon.svg', 'manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
@@ -20,10 +20,15 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
+        // Don't cache 404/500s; opaque = cross-origin Google Fonts, status unknowable.
+        if (res.ok || res.type === 'opaque') {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
+        }
         return res;
       })
-      .catch(() => caches.match(e.request).then(hit => hit || caches.match('index.html')))
+      // index.html only stands in for pages, never for a missing image or script.
+      .catch(() => caches.match(e.request).then(hit =>
+        hit || (e.request.mode === 'navigate' ? caches.match('index.html') : Response.error())))
   );
 });

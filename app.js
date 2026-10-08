@@ -29,6 +29,7 @@ const PM = {};
   const saturationVal = document.getElementById('saturationVal');
 
   let activeFilter = 'none';
+  let imageSource = null;
   let activePalette = 'none';
   const activeEffects = new Set();
 
@@ -54,10 +55,10 @@ const PM = {};
     return BAYER4[y % 4][x % 4] / 16 - 0.5;
   }
 
-  const offscreen = document.createElement('canvas');
-  const offCtx = offscreen.getContext('2d');
+  // iOS Safari silently blanks canvases above ~16.7MP (4096²); 24MP+ phone photos hit that.
+  const MAX_OUTPUT = 4096;
   const small = document.createElement('canvas');
-  const smallCtx = small.getContext('2d');
+  const smallCtx = small.getContext('2d', { willReadFrequently: true });
 
   function sourceSize(el) {
     if (el instanceof HTMLVideoElement) return [el.videoWidth, el.videoHeight];
@@ -66,13 +67,20 @@ const PM = {};
 
   function loadImage(file) {
     if (!file || !file.type.startsWith('image/')) return;
+    const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
+      URL.revokeObjectURL(url);
+      imageSource = img;
       dropzone.style.display = 'none';
       resetBtn.disabled = false;
       PM.setSource(img);
     };
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      alert('No se pudo abrir esa imagen (¿formato HEIC?). Probá con JPG o PNG.');
+    };
+    img.src = url;
   }
 
   function filterString() {
@@ -152,15 +160,11 @@ const PM = {};
   function render() {
     const source = PM.source;
     if (!source) return;
-    const [w, h] = sourceSize(source);
-    if (!w || !h) return;
-
-    if (offscreen.width !== w || offscreen.height !== h) {
-      offscreen.width = w;
-      offscreen.height = h;
-    }
-    offCtx.clearRect(0, 0, w, h);
-    offCtx.drawImage(source, 0, 0, w, h);
+    const [srcW, srcH] = sourceSize(source);
+    if (!srcW || !srcH) return;
+    const scale = Math.min(1, MAX_OUTPUT / Math.max(srcW, srcH));
+    const w = Math.round(srcW * scale);
+    const h = Math.round(srcH * scale);
 
     const size = Number(pixelSize.value);
     const smallW = Math.max(1, Math.round(w / size));
@@ -173,15 +177,18 @@ const PM = {};
     smallCtx.imageSmoothingEnabled = true;
     smallCtx.filter = filterString();
     smallCtx.clearRect(0, 0, smallW, smallH);
-    smallCtx.drawImage(offscreen, 0, 0, w, h, 0, 0, smallW, smallH);
+    smallCtx.drawImage(source, 0, 0, srcW, srcH, 0, 0, smallW, smallH);
 
     const imageData = smallCtx.getImageData(0, 0, smallW, smallH);
     const palette = activePalette === 'none' ? null : PALETTE_RGB[activePalette];
     quantize(imageData, smallW, Number(colors.value), palette, activeEffects.has('dither'));
     smallCtx.putImageData(imageData, 0, 0);
 
-    canvas.width = w;
-    canvas.height = h;
+    // Resizing reallocates the canvas; at 60fps in camera mode that adds up.
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
     ctx.imageSmoothingEnabled = false;
     ctx.filter = 'none';
     ctx.clearRect(0, 0, w, h);
@@ -195,9 +202,6 @@ const PM = {};
   PM.canvas = canvas;
   PM.source = null;
   PM.render = render;
-  PM.clickPalette = (name) => palettesEl.querySelector(`button[data-palette="${name}"]`)?.click();
-  PM.clickEffect = (name) => effectsEl.querySelector(`button[data-effect="${name}"]`)?.click();
-  PM.isEffectActive = (name) => activeEffects.has(name);
 
   PM.setSource = (el) => {
     PM.source = el;
@@ -223,16 +227,17 @@ const PM = {};
   );
   dropzone.addEventListener('drop', (e) => loadImage(e.dataTransfer.files[0]));
 
-  [pixelSize, colors, brightness, contrast, saturation].forEach(input => {
-    input.addEventListener('input', () => {
-      pixelSizeVal.textContent = pixelSize.value;
-      colorsVal.textContent = colors.value;
-      brightnessVal.textContent = brightness.value + '%';
-      contrastVal.textContent = contrast.value + '%';
-      saturationVal.textContent = saturation.value + '%';
-      render();
-    });
-  });
+  const sliders = [pixelSize, colors, brightness, contrast, saturation];
+  function syncLabels() {
+    pixelSizeVal.textContent = pixelSize.value;
+    colorsVal.textContent = colors.value;
+    brightnessVal.textContent = brightness.value + '%';
+    contrastVal.textContent = contrast.value + '%';
+    saturationVal.textContent = saturation.value + '%';
+  }
+  sliders.forEach(input => input.addEventListener('input', () => { syncLabels(); render(); }));
+  // Browsers restore slider values on reload/back, so the hardcoded labels can lie.
+  syncLabels();
 
   filtersEl.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-filter]');
@@ -305,7 +310,10 @@ const PM = {};
   resetBtn.addEventListener('click', () => {
     PM.onResetCamera?.();
     PM.clearSource();
+    imageSource = null;
     fileInput.value = '';
+    sliders.forEach(input => { input.value = input.defaultValue; });
+    syncLabels();
     dropzone.style.display = 'block';
     resetBtn.disabled = true;
     applyDefaultLook();
@@ -322,12 +330,16 @@ const PM = {};
     [...modeTabs.children].forEach(b => b.classList.toggle('active', b === btn));
     imagePanel.hidden = mode !== 'image';
     cameraPanel.hidden = mode !== 'camera';
-    canvas.style.display = PM.source ? 'block' : 'none';
     gbTagline.textContent = TAGLINES[mode];
+    // Each mode owns its source: the camera starts blank, the image tab gets its image back
+    // (not the frozen last camera frame).
     if (mode === 'camera') {
+      PM.clearSource();
       PM.onEnterCamera?.();
     } else {
       PM.onExitCamera?.();
+      if (imageSource) PM.setSource(imageSource);
+      else PM.clearSource();
     }
   }
 
@@ -369,6 +381,9 @@ const PM = {};
   });
   sheetBackdrop.addEventListener('click', closeSheet);
   sheetCloseBtn.addEventListener('click', closeSheet);
+  addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && pixelControlsPanel.classList.contains('open')) closeSheet();
+  });
 
   if ('serviceWorker' in navigator) {
     addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
